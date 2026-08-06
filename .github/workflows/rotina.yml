@@ -29,6 +29,6 @@ jobs:
         env:
           MONITOR_LOGIN_PAGE_URL: ${{secrets.MONITOR_LOGIN_PAGE_URL}}
           MONITOR_TARGET_URL: ${{secrets.MONITOR_TARGET_URL}}
-          MONITOR_USERNAME: ${{ secrets.MONITOR_USERNAME }}
-          MONITOR_PASSWORD: ${{ secrets.MONITOR_PASSWORD }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          MONITOR_USERNAME: ${{secrets.MONITOR_USERNAME}}
+          MONITOR_PASSWORD: ${{secrets.MONITOR_PASSWORD}}
+          DISCORD_WEBHOOK_URL: ${{secrets.DISCORD_WEBHOOK_URL}}
