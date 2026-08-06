@@ -31,10 +31,6 @@ var fetcher = new PageFetcherService(timeout);
 var checker = new ContentCheckerService();
 var notifier = new DiscordNotifierService();
 
-await notifier.SendNotificationAsync(
-    webhookUrl!,
-    $"ATENÇÃO: checando se funciona");
-
 var loggedIn = await fetcher.LoginAsync(loginUrl!, username!, password!);
 if (!loggedIn)
 {
