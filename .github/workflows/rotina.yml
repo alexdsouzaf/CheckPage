@@ -25,7 +25,7 @@ jobs:
         run: dotnet restore
 
       - name: Rodar o programa
-        run: dotnet run --project src --configuration Release
+        run: dotnet run --configuration Release
         env:
           MONITOR_LOGIN_PAGE_URL: ${{secrets.MONITOR_LOGIN_PAGE_URL}}
           MONITOR_TARGET_URL: ${{secrets.MONITOR_TARGET_URL}}
