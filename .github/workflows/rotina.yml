@@ -1,0 +1,34 @@
+name: Check Page
+
+on:
+  schedule:
+    # roda a cada 30 minutos (ajuste conforme sua necessidade)
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+    # permite disparar manualmente pela aba "Actions" do GitHub
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restaurar dependências
+        run: dotnet restore
+
+      - name: Rodar o programa
+        run: dotnet run --project src --configuration Release
+        env:
+          MONITOR_LOGIN_PAGE_URL: ${{secrets.MONITOR_LOGIN_PAGE_URL}}
+          MONITOR_TARGET_URL: ${{secrets.MONITOR_TARGET_URL}}
+          PAGE_USERNAME: ${{ secrets.PAGE_USERNAME }}
+          PAGE_PASSWORD: ${{ secrets.PAGE_PASSWORD }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
