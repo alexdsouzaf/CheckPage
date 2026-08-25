@@ -1,9 +1,9 @@
 name: Check Page
 
 on:
-  schedule:
+  #schedule:
     # roda a cada 30 minutos (ajuste conforme sua necessidade)
-    - cron: "*/20 11-23 * * *"
+    #- cron: "*/20 11-23 * * *"
   workflow_dispatch:
     # permite disparar manualmente pela aba "Actions" do GitHub
 
