@@ -19,13 +19,13 @@ jobs:
       - name: Configurar .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
 
       - name: Restaurar dependências
         run: dotnet restore
 
       - name: Rodar o programa
-        run: dotnet run --configuration Release
+        run: dotnet run --configuration Release --project CheckPage.csproj -- inscricao-trilha
         env:
           MONITOR_LOGIN_PAGE_URL: ${{secrets.MONITOR_LOGIN_PAGE_URL}}
           MONITOR_TARGET_URL: ${{secrets.MONITOR_TARGET_URL}}

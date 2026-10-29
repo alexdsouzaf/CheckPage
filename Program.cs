@@ -1,60 +1,37 @@
-﻿using CheckPage.Services;
+using System.Reflection;
+using CheckPage.Consultas;
 
-var loginUrl = Environment.GetEnvironmentVariable("MONITOR_LOGIN_PAGE_URL");
-var targetUrl = Environment.GetEnvironmentVariable("MONITOR_TARGET_URL");
-var username = Environment.GetEnvironmentVariable("MONITOR_USERNAME");
-var password = Environment.GetEnvironmentVariable("MONITOR_PASSWORD");
-var webhookUrl = Environment.GetEnvironmentVariable("DISCORD_WEBHOOK_URL");
-var searchText = Environment.GetEnvironmentVariable("MONITOR_SEARCH_TEXT") ?? "Vagas Esgotadas";
-var timeout = int.TryParse(Environment.GetEnvironmentVariable("MONITOR_TIMEOUT"), out var t) ? t : 15;
+var consultas = Assembly.GetExecutingAssembly()
+    .GetTypes()
+    .Where(type => !type.IsInterface && !type.IsAbstract && typeof(IConsulta).IsAssignableFrom(type))
+    .Select(type => (IConsulta)(Activator.CreateInstance(type)
+        ?? throw new InvalidOperationException($"Não foi possível criar a consulta {type.Name}.")))
+    .ToDictionary(consulta => consulta.Nome, StringComparer.OrdinalIgnoreCase);
 
-
-var missing = new[] { loginUrl, targetUrl, username, password, webhookUrl }
-    .Where(string.IsNullOrEmpty).ToList();
-
-if (missing.Count > 0)
+if (args.Length == 0 || args[0] is "--help" or "-h" or "help")
 {
-    Console.WriteLine("Variáveis de ambiente obrigatórias não definidas:");
-    if (string.IsNullOrEmpty(loginUrl)) Console.WriteLine("  - MONITOR_LOGIN_PAGE_URL");
-    if (string.IsNullOrEmpty(targetUrl)) Console.WriteLine("  - MONITOR_TARGET_URL");
-    if (string.IsNullOrEmpty(username)) Console.WriteLine("  - MONITOR_USERNAME");
-    if (string.IsNullOrEmpty(password)) Console.WriteLine("  - MONITOR_PASSWORD");
-    if (string.IsNullOrEmpty(webhookUrl)) Console.WriteLine("  - DISCORD_WEBHOOK_URL");
-    return;
+    Console.WriteLine("Uso: CheckPage <consulta>");
+    Console.WriteLine("Consultas disponíveis:");
+
+    foreach (var consulta in consultas.Keys.Order(StringComparer.OrdinalIgnoreCase))
+        Console.WriteLine($"  {consulta}");
+
+    return args.Length == 0 ? 2 : 0;
 }
 
-Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] CheckPage iniciado.");
-Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] URL alvo: {targetUrl}");
-Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Buscando por: \"{searchText}\"");
-
-var fetcher = new PageFetcherService(timeout);
-var checker = new ContentCheckerService();
-var notifier = new DiscordNotifierService();
-
-var loggedIn = await fetcher.LoginAsync(loginUrl!, username!, password!);
-if (!loggedIn)
+if (!consultas.TryGetValue(args[0], out var consultaSelecionada))
 {
-    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Login falhou. Encerrando.");
-    return;
+    Console.Error.WriteLine($"Consulta desconhecida: {args[0]}");
+    Console.Error.WriteLine("Use 'CheckPage --help' para ver as consultas disponíveis.");
+    return 2;
 }
 
-var html = await fetcher.FetchPageAsync(targetUrl!);
-if (html is null)
+try
 {
-    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Não foi possível obter a página. Encerrando.");
-    return;
+    return await consultaSelecionada.ExecutarAsync(args.Skip(1).ToArray());
 }
-
-var textFound = checker.IsTextPresent(html, searchText);
-
-if (textFound)
+catch (Exception ex)
 {
-    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] \"{searchText}\" encontrado.");
-}
-else
-{
-    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] \"{searchText}\" NÃO encontrado!");
-    await notifier.SendNotificationAsync(
-        webhookUrl!,
-        $"ATENÇÃO: \"{searchText}\" não encontrado em {targetUrl}. Verifique a página!");
+    Console.Error.WriteLine($"Erro não tratado na consulta '{consultaSelecionada.Nome}' ({ex.GetType().Name}).");
+    return 1;
 }
